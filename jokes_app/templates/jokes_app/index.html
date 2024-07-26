@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joke Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        #joke-container {
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Joke Generator</h1>
+    <form id="joke-form">
+        <label for="category">Category:</label>
+        <select id="category" name="category">
+            <option value="Any">Any</option>
+            {% for category in categories %}
+                <option value="{{ category }}">{{ category }}</option>
+            {% endfor %}
+        </select>
+        <br><br>
+        <label for="type">Type:</label>
+        <select id="type" name="type">
+            <option value="single">Single</option>
+            <option value="twopart">Two-part</option>
+        </select>
+        <br><br>
+        <label>Blacklist:</label><br>
+        <input type="checkbox" id="nsfw" name="blacklist" value="nsfw">
+        <label for="nsfw">NSFW</label>
+        <input type="checkbox" id="religious" name="blacklist" value="religious">
+        <label for="religious">Religious</label>
+        <input type="checkbox" id="political" name="blacklist" value="political">
+        <label for="political">Political</label>
+        <input type="checkbox" id="racist" name="blacklist" value="racist">
+        <label for="racist">Racist</label>
+        <input type="checkbox" id="sexist" name="blacklist" value="sexist">
+        <label for="sexist">Sexist</label>
+        <br><br>
+        <button type="submit">Get Joke</button>
+    </form>
+    <div id="joke-container">
+        <p id="joke-text"></p>
+        <p id="joke-delivery"></p>
+    </div>
+
+    <script>
+        document.getElementById('joke-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const category = form.category.value;
+            const type = form.type.value;
+            const blacklist = Array.from(form.querySelectorAll('input[name="blacklist"]:checked')).map(cb => cb.value);
+            
+            let url = `/api/joke/?category=${category}&type=${type}`;
+            blacklist.forEach(flag => {
+                url += `&blacklist=${flag}`;
+            });
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const jokeText = document.getElementById('joke-text');
+                    const jokeDelivery = document.getElementById('joke-delivery');
+                    
+                    if (data.type === 'single') {
+                        jokeText.textContent = data.joke;
+                        jokeDelivery.textContent = '';
+                    } else {
+                        jokeText.textContent = data.setup;
+                        jokeDelivery.textContent = data.delivery;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('joke-text').textContent = 'Failed to fetch joke. Please try again.';
+                });
+        });
+    </script>
+</body>
+</html>
