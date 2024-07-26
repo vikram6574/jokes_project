@@ -4,11 +4,20 @@ from django.views.decorators.http import require_http_methods
 from django.shortcuts import render
 
 BASE_URL = 'https://v2.jokeapi.dev/joke'
+CATEGORIES_URL = 'https://v2.jokeapi.dev/categories'
 
 def index(request):
-    categories_response = requests.get(f"{BASE_URL}/categories")
-    categories = categories_response.json().get('categories', [])
-    return render(request, 'jokes_app/index.html', {'categories': categories})
+    try:
+        categories_response = requests.get(CATEGORIES_URL)
+        categories_response.raise_for_status()
+        categories_data = categories_response.json()
+        print("Categories data:", categories_data)  # Debug print
+        categories = categories_data.get('categories', [])
+        print("Categories:", categories)  # Debug print
+        return render(request, 'jokes_app/index.html', {'categories': categories})
+    except requests.RequestException as e:
+        print(f"Error fetching categories: {e}")  # Debug print
+        return render(request, 'jokes_app/index.html', {'categories': []})
 
 @require_http_methods(["GET"])
 def get_joke(request):
@@ -34,9 +43,8 @@ def get_joke(request):
 
 @require_http_methods(["GET"])
 def get_categories(request):
-    url = f"{BASE_URL}/categories"
     try:
-        response = requests.get(url)
+        response = requests.get(CATEGORIES_URL)
         response.raise_for_status()
         categories = response.json()
         return JsonResponse(categories)
